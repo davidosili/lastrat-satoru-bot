@@ -7,6 +7,9 @@ const { Hercai } = require('hercai');
 const herc = new Hercai();
 const keep_alive = require('./keep_alive.js');
 
+//memes api
+const memes = require("random-memes");
+
 //tiktok api
 const { TiktokDL } = require("@tobyg74/tiktok-api-dl");
 
@@ -17,8 +20,7 @@ const ytstream = require('yt-stream');
 const fs = require('fs');
 
 //sticker api
-//const { Sticker, createSticker, StickerTypes } = require('wa-sticker-formatter');
-//const chatgpt = require('chatgpt-npm');
+const { Sticker, createSticker, StickerTypes } = require('wa-sticker-formatter');
 const { DisconnectReason, useMultiFileAuthState, downloadMediaMessage, updateProfilePicture } = require("@whiskeysockets/baileys");
 //import { getLinkPreview, getPreviewFromContent } from "link-preview-js";
 
@@ -42,6 +44,38 @@ const getText = (message) => {
     return "";
   }
 };
+
+const isGroup = (key)=>{
+  if(key.remoteJid.includes('@g.us')){
+    return true;
+  }
+  else{
+    return false;
+  }
+}
+
+var admin = ['237671624397'];
+function adminCheck(key){
+        var state = 0; 
+        admin.forEach((item)=>{
+            if(key.includes(item)){
+                state = 1;
+            }
+        });
+        return state;
+  }
+
+const isAdmin = async(key)=>{
+  const group = await sock.groupMetadata(key.remoteJid);
+  const members = group.participants;
+  var action = 0;
+  members.forEach(({id,admin})=>{
+    if((id==key.participant) && (admin!==null)){
+      action = 1;
+    }
+  });
+  return action;
+}
 
 const sendMessage = async (jid,content, ...args) =>{
   try{
@@ -88,6 +122,15 @@ const handleAll = async (msg) => {
 
   //@ALL @All @all
   if(text.toLowerCase().startsWith('#add')){
+    if(!isGroup(key)){
+      sendMessage(key.remoteJid,{text: '*Function only work inside group*' }, {quoted: msg});
+      return "";
+    }
+    const test = await isAdmin(key);
+    if(test==0){
+      sendMessage(key.remoteJid,{text: '*Only Group Admin can use this functionality Bakaa*' }, {quoted: msg});
+      return "";
+    }
     const prefix = "#add";
     const value = text.slice(prefix.length);
     const list = stringToNumberArray(value.trim(),"@s.whatsapp.net");
@@ -121,23 +164,36 @@ const handleAll = async (msg) => {
       '|▻ 🔰#join\n'+
       '|▻ 🔰#gpinfo\n'+
       '|▻ 🔰#all\n'+
-      '|▻ 🔰#Vos Q\n' +
       '|--------- ✤ OTHER ✤ --------\n'+
       '|▻ 🔰#meme\n'+
       '|▻ 🔰#sticker\n' +
       '|▻ 🔰#animewall\n'+
       '|▻ 🔰#ask\n'+
       '|--------- ✤ DOWNLOAD ✤ --------\n'+
-      '|▻ 🔰#yt\n'+
+      '|▻ 🔰#ytmp3\n'+
       '|▻ 🔰#fb\n'+
       '|▻ 🔰#tk\n'+
       '|▻ 🔰#instagram\n'+
       '|▻ 🔰#ytsearch\n'},
         {quoted: msg});
   }
-  /*else if(text.toLowerCase().startsWith('#kick')){
+  else if(text.toLowerCase().startsWith('#kick')){
+    if(!isGroup(key)){
+      sendMessage(key.remoteJid,{text: '*Function only work inside group*' }, {quoted: msg});
+      return "";
+    }
+    var test = await isAdmin(key);
+    if(test==0){
+      sendMessage(key.remoteJid,{text: '*Only Group Admin can use this functionality Bakaa*' }, {quoted: msg});
+      return "";
+    }
     const prefix = "#kick";
     const value = text.slice(prefix.length);
+    var test2 = adminCheck(value.trim());
+    if(test2==1){
+      sendMessage(key.remoteJid,{text: "*Bakaa you can't remove bot creator*\n*Yowaimo*" }, {quoted: msg});
+      return "";
+    }
     const list = stringToNumberArray(value.trim(),"@s.whatsapp.net");
     try{
       const response = await sock.groupParticipantsUpdate(
@@ -148,8 +204,17 @@ const handleAll = async (msg) => {
     }catch {
       sendMessage(key.remoteJid,{text: '*Enter correctly the format*\n example: #kick 237690124021,241690237310' }, {quoted: msg});
     }
-  }*/
+  }
   else if(text.toLowerCase().startsWith('#promote')){
+    if(!isGroup(key)){
+      sendMessage(key.remoteJid,{text: '*Function only work inside group*' }, {quoted: msg});
+      return "";
+    }
+    const test = await isAdmin(key);
+    if(test==0){
+      sendMessage(key.remoteJid,{text: '*Only Group Admin can use this functionality Bakaa*' }, {quoted: msg});
+      return "";
+    }
     const prefix = "#promote";
     const value = text.slice(prefix.length);
     const list = stringToNumberArray(value.trim(),"@s.whatsapp.net");
@@ -160,10 +225,19 @@ const handleAll = async (msg) => {
         "promote" // replace this parameter with "remove", "demote" or "promote"
     );
     }catch {
-      sendMessage(key.remoteJid,{text: '*Enter correctly the format*\n example: #promote 237690124021,241690237310' }, {quoted: msg});
+      sendMessage(key.remoteJid,{text: '*PLEASE THE BOT MUST FIRST OF ALL BE ADMIN*\n*AND*\n*Enter correctly the format*\nexample: #promote 237690124021,241690237310' }, {quoted: msg});
     }
   }
   else if(text.toLowerCase().startsWith('#demote')){
+    if(!isGroup(key)){
+      sendMessage(key.remoteJid,{text: '*Function only work inside group*' }, {quoted: msg});
+      return "";
+    }
+    const test = await isAdmin(key);
+    if(test==0){
+      sendMessage(key.remoteJid,{text: '*Only Group Admin can use this functionality Bakaa*' }, {quoted: msg});
+      return "";
+    }
     const prefix = "#demote";
     const value = text.slice(prefix.length);
     const list = stringToNumberArray(value.trim(),"@s.whatsapp.net");
@@ -178,6 +252,15 @@ const handleAll = async (msg) => {
     }
   }
   else if(text.toLowerCase().startsWith('#setdesc')){
+    if(!isGroup(key)){
+      sendMessage(key.remoteJid,{text: '*Function only work inside group*' }, {quoted: msg});
+      return "";
+    }
+    const test = await isAdmin(key);
+    if(test==0){
+      sendMessage(key.remoteJid,{text: '*Only Group Admin can use this functionality Bakaa*' }, {quoted: msg});
+      return "";
+    }
     const prefix = "#setdesc";
     const value = text.slice(prefix.length);
     try{await sock.groupUpdateDescription(key.remoteJid, value.trim());
@@ -186,6 +269,15 @@ const handleAll = async (msg) => {
     }
   }
   else if(text.toLowerCase().startsWith('#setsub')){
+    if(!isGroup(key)){
+      sendMessage(key.remoteJid,{text: '*Function only work inside group*' }, {quoted: msg});
+      return "";
+    }
+    const test = await isAdmin(key);
+    if(test==0){
+      sendMessage(key.remoteJid,{text: '*Only Group Admin can use this functionality Bakaa*' }, {quoted: msg});
+      return "";
+    }
     const prefix = "#setsub";
     const value = text.slice(prefix.length);
     try{await sock.groupUpdateSubject(key.remoteJid, value.trim());
@@ -194,20 +286,50 @@ const handleAll = async (msg) => {
     }
   }
   else if(text.toLowerCase().startsWith('#gpmsg')){
+    if(!isGroup(key)){
+      sendMessage(key.remoteJid,{text: '*Function only work inside group*' }, {quoted: msg});
+      return "";
+    }
+    const test = await isAdmin(key);
+    if(test==0){
+      sendMessage(key.remoteJid,{text: '*Only Group Admin can use this functionality Bakaa*' }, {quoted: msg});
+      return "";
+    }
     const prefix = "#gpmsg";
     const value = text.slice(prefix.length);
     if(value.includes('on')){
+      if(!isGroup(key)){
+        sendMessage(key.remoteJid,{text: '*Function only work inside group*' }, {quoted: msg});
+        return "";
+      }
       // allow everyone to send messages
       await sock.groupSettingUpdate(key.remoteJid, 'not_announcement')
     }
     else if(value.includes('off')){
+      if(!isGroup(key)){
+        sendMessage(key.remoteJid,{text: '*Function only work inside group*' }, {quoted: msg});
+        return "";
+      }
       await sock.groupSettingUpdate(key.remoteJid, 'announcement')
     }
     else if(value.includes('')){
+      if(!isGroup(key)){
+        sendMessage(key.remoteJid,{text: '*Function only work inside group*' }, {quoted: msg});
+        return "";
+      }
       sendMessage(key.remoteJid,{text: '*on or off the group message*'}, {quoted: msg});
     }
   }
   else if(text.toLowerCase().startsWith('#gpsetting')){
+    if(!isGroup(key)){
+      sendMessage(key.remoteJid,{text: '*Function only work inside group*' }, {quoted: msg});
+      return "";
+    }
+    const test = await isAdmin(key);
+    if(test==0){
+      sendMessage(key.remoteJid,{text: '*Only Group Admin can use this functionality Bakaa*' }, {quoted: msg});
+      return "";
+    }
     const prefix = "#gpsetting";
     const value = text.slice(prefix.length);
     if(value.includes('on')){
@@ -215,24 +337,56 @@ const handleAll = async (msg) => {
       await sock.groupSettingUpdate(key.remoteJid, 'locked')
     }
     else if(value.includes('off')){
+      if(!isGroup(key)){
+        sendMessage(key.remoteJid,{text: '*Function only work inside group*' }, {quoted: msg});
+        return "";
+      }
       // allow everyone to modify the group's settings -- like display picture etc.
       await sock.groupSettingUpdate(key.remoteJid, 'unlocked')
     }
     else if(value.includes('')){
+      if(!isGroup(key)){
+        sendMessage(key.remoteJid,{text: '*Function only work inside group*' }, {quoted: msg});
+        return "";
+      }
       sendMessage(key.remoteJid,{text: '*on or off the setting*'}, {quoted: msg});
     }
   }
-  /*else if(text.toLowerCase()=='#outgp'){
-    await sock.groupLeave(key.remoteJid) // (will throw error if it fails)
-  }*/
   else if(text.toLowerCase()=="#gplink"){
+    if(!isGroup(key)){
+      sendMessage(key.remoteJid,{text: '*Function only work inside group*' }, {quoted: msg});
+      return "";
+    }
+    const test = await isAdmin(key);
+    if(test==0){
+      sendMessage(key.remoteJid,{text: '*Only Group Admin can use this functionality Bakaa*' }, {quoted: msg});
+      return "";
+    }
     const code = await sock.groupInviteCode(key.remoteJid);
     sendMessage(key.remoteJid,{text: 'https://chat.whatsapp.com/'+code}, {quoted: msg});
   }
   else if(text.toLowerCase()=="#gprevoke"){
+    if(!isGroup(key)){
+      sendMessage(key.remoteJid,{text: '*Function only work inside group*' }, {quoted: msg});
+      return "";
+    }
+    const test = await isAdmin(key);
+    if(test==0){
+      sendMessage(key.remoteJid,{text: '*Only Group Admin can use this functionality Bakaa*' }, {quoted: msg});
+      return "";
+    }
     const code = await sock.groupRevokeInvite(key.remoteJid);
   }
   else if(text.toLowerCase().startsWith('#join')){
+    if(!isGroup(key)){
+      sendMessage(key.remoteJid,{text: '*Function only work inside group*' }, {quoted: msg});
+      return "";
+    }
+    const test = await isAdmin(key);
+    if(test==0){
+      sendMessage(key.remoteJid,{text: '*Only Group Admin can use this functionality Bakaa*' }, {quoted: msg});
+      return "";
+    }
     var prefix = "#join";
     const value = text.slice(prefix.length);
     prefix = 'https://chat.whatsapp.com/ ';
@@ -245,6 +399,15 @@ const handleAll = async (msg) => {
     }
   }
   else if(text.toLowerCase().startsWith('#gpinfo')){
+    if(!isGroup(key)){
+      sendMessage(key.remoteJid,{text: '*Function only work inside group*' }, {quoted: msg});
+      return "";
+    }
+    const test = await isAdmin(key);
+    if(test==0){
+      sendMessage(key.remoteJid,{text: '*Only Group Admin can use this functionality Bakaa*' }, {quoted: msg});
+      return "";
+    }
     var prefix = "#gpinfo";
     const value = text.slice(prefix.length);
     prefix = 'https://chat.whatsapp.com/ ';
@@ -260,6 +423,15 @@ const handleAll = async (msg) => {
     }
   }
   else if(messageType === 'imageMessage' && message.imageMessage.caption=='#setppgc'){
+    if(!isGroup(key)){
+      sendMessage(key.remoteJid,{text: '*Function only work inside group*' }, {quoted: msg});
+      return "";
+    }
+    const test = await isAdmin(key);
+    if(test==0){
+      sendMessage(key.remoteJid,{text: '*Only Group Admin can use this functionality Bakaa*' }, {quoted: msg});
+      return "";
+    }
     try{
       const buffer = await downloadMediaMessage(
         msg,
@@ -441,17 +613,71 @@ const handleAll = async (msg) => {
     background: '#000000' // The sticker background color (only for full stickers)
       });
     const buffer2 = await sticker.toBuffer();
-    await sticker.toFile('./sticker.webp');
+    //await sticker.toFile('./sticker.webp');
     await writeFile('./sticker.webp', buffer2);
 
+    await sock.sendMessage(
+      key.remoteJid, 
+      {
+        sticker: {url:'./sticker.webp'}
+      },
+      {quoted:msg});
 
     }catch(error){
-
+      await sock.sendMessage(
+        key.remoteJid, 
+        {
+          text:error
+        },
+        {quoted:msg});
+    }
+  }
+  else if(text.toLowerCase()=='#meme'){
+    try{
+    memes.random().then(async(meme) => {
+      console.log("Meme generated: " + meme.image);
+      if(meme.image.includes('.gif')){
+        await sock.sendMessage(
+          key.remoteJid, 
+          {
+            video: {url:meme.image},
+            caption: meme.caption + '\n*Generated by Lastrat Satoru*'
+          },
+          {quoted:msg}
+      );
+      }
+      else{
+        await sock.sendMessage(
+          key.remoteJid, 
+          {
+            image: {url:meme.image},
+            caption: meme.caption + '\n*Generated by Lastrat Satoru*'
+          },
+          {quoted:msg}
+      );
+      }
+      
+      });
+    }catch(error){
+      key.remoteJid, 
+          {
+           text: error
+          },
+          {quoted:msg}
     }
   }
   else if(!text.toLowerCase().includes('#all')) return;
 
   else if(text.toLowerCase().startsWith('#all')){
+    if(!isGroup(key)){
+      sendMessage(key.remoteJid,{text: '*Function only work inside group*' }, {quoted: msg});
+      return "";
+    }
+    const test = await isAdmin(key);
+    if(test==0){
+      sendMessage(key.remoteJid,{text: '*Only Group Admin can use this functionality Bakaa*' }, {quoted: msg});
+      return "";
+    }
   // 1. get all group members
     const group = await sock.groupMetadata(key.remoteJid);
     const members = group.participants;
